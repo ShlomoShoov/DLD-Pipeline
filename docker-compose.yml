@@ -55,5 +55,34 @@ services:
       - client_id=${raw_producer_client_id}
       - processing_topic_name=${processing_topic_name}
       - group_id=${processor_group_id}
+  mongo:
+    image: mongo
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongo:27017/test --quiet 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    container_name: mongo:7.0
+    environment:
+      MONGO_INITDB_USERNAME: root
+      MONGO_INITDB_PASSWORD: example
+  db_consumer:
+    build:
+      context: ./DB-Consumer
+      dockerfile: Dockerfile
+    container_name: db_consumer
 
-  
+    depends_on:
+      processing_service:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+
+    environment:
+      - kafka__BootstrapServers=${bootstrap_server}
+      - kafka__ProcessingDataTopicName=${processing_topic_name}
+      - kafka__GroupId=${processor_group_id}
+      - mongo__ConnectionString=mongodb://${MONGO_INITDB_USERNAME}:${MONGO_INITDB_PASSWORD}@mongo:27017/
+      - mongo__DatabaseName=surveys_db
+      - mongo__SurveysCollectionName=surveys
+

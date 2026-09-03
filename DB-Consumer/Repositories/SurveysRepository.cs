@@ -22,7 +22,17 @@ namespace DB_Consumer.Repositories
 
         public async Task AddSurvey(Survey survey)
         {
-            await _context.Surveys.InsertOneAsync(survey);
+            try
+            {
+                await _context.Surveys.InsertOneAsync(survey);
+                _logger.LogInformation($"Saved To Data base. Id: {survey.ResponseId}");
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Error While Saving to data base! {ex}");
+            }
+
+
         }
     }
 }
