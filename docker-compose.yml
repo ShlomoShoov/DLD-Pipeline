@@ -37,3 +37,23 @@ services:
       - bootstrap_server=${bootstrap_server}
       - raw_topic_name=${raw_topic_name}
       - client_id=${raw_producer_client_id}
+
+  processing_service:
+    build:
+      context: ./ProcessingService
+      dockerfile: Dockerfile
+    image: processing_service
+    container_name: processing_service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      raw_producer:
+        condition: service_started
+    environment:
+      - bootstrap_server=${bootstrap_server}
+      - raw_topic_name=${raw_topic_name}
+      - client_id=${raw_producer_client_id}
+      - processing_topic_name=${processing_topic_name}
+      - group_id=${processor_group_id}
+
+  
