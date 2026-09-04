@@ -1,0 +1,103 @@
+services:
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://${bootstrap_server},CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${bootstrap_server}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 1
+
+
+    healthcheck:
+      test: /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${bootstrap_server} --list
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  raw_producer:
+    build:
+      context: ./RawProducer
+      dockerfile: Dockerfile
+    container_name: raw_producer
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - bootstrap_server=${bootstrap_server}
+      - raw_topic_name=${raw_topic_name}
+      - client_id=${raw_producer_client_id}
+
+  processing_service:
+    build:
+      context: ./ProcessingService
+      dockerfile: Dockerfile
+    container_name: processing_service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      raw_producer:
+        condition: service_started
+    environment:
+      - bootstrap_server=${bootstrap_server}
+      - raw_topic_name=${raw_topic_name}
+      - client_id=${raw_producer_client_id}
+      - processing_topic_name=${processing_topic_name}
+      - group_id=${processor_group_id}
+  mongo:
+    image: mongo:7.0
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+  db_consumer:
+    build:
+      context: ./DB-Consumer
+      dockerfile: Dockerfile
+    container_name: db_consumer
+
+    depends_on:
+      processing_service:
+        condition: service_started
+      
+      mongo:
+        condition: service_healthy
+
+    environment:
+      - kafka__BootstrapServers=${bootstrap_server}
+      - kafka__ProcessingDataTopicName=${processing_topic_name}
+      - kafka__GroupId=${processor_group_id}
+      - mongo__ConnectionString=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+      - mongo__DatabaseName=surveys_db
+      - mongo__SurveysCollectionName=surveys
+
+
+  api:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    container_name: api
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - 8000:8080
+    environment:
+      - mongo__ConnectionString=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+      - mongo__DatabaseName=surveys_db
+      - mongo__SurveysCollectionName=surveys
+
