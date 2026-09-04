@@ -18,5 +18,7 @@ class FileLoader:
             data = csv.DictReader(file)
             for row in data:
                 if row:
+                    print("before",row)
                     row = json.dumps(row)
+                    print("after", row)
                     yield row

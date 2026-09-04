@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using DB_Consumer.Models;
@@ -46,9 +47,14 @@ namespace DB_Consumer.Orchestrators
 
                 SurveysRepository repository = dbScope.ServiceProvider.GetRequiredService<SurveysRepository>();
                 Survey? survey = new();
+
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                };
                 try
                 {
-                    survey = JsonSerializer.Deserialize<Survey>(result.Message.Value);
+                    survey = JsonSerializer.Deserialize<Survey>(result.Message.Value, options);
                 }
                 catch(JsonException ex)
                 {

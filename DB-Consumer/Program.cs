@@ -13,18 +13,19 @@ var configs = new ConfigurationBuilder()
 
 
 KafkaConfigs kafkaConfigs = new KafkaConfigs()
-                            {
-                                
+                            {                         
                             };
 
 configs.GetSection("kafka").Bind(kafkaConfigs);
 
-MongoConfigs mongoConfigs = new MongoConfigs
-                            {
-                                
-                            };
-configs.GetSection("mongo").Bind(kafkaConfigs);
 
+MongoConfigs mongoConfigs = new MongoConfigs
+                            {                          
+                            };
+configs.GetSection("mongo").Bind(mongoConfigs);
+System.Console.WriteLine(kafkaConfigs.BootstrapServers);
+System.Console.WriteLine(mongoConfigs.ConnectionString);
+System.Console.WriteLine(mongoConfigs.DatabaseName);
 ServiceCollection serviceDescriptors = new ServiceCollection();
 
 serviceDescriptors.AddScoped<KafkaConsumerService>();

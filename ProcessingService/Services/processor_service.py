@@ -14,6 +14,7 @@ def cleaning(df:pd.DataFrame)-> None:
     df.AILearnHow = df.AILearnHow.str.split(";")
     df.LearnCode = df.LearnCode.str.split(";")
     df.YearsCode = pd.to_numeric(df.YearsCode).astype('Int64')
+    df.ResponseId = pd.to_numeric(df.ResponseId)
     
 
 def label_experience_level(years:int):
@@ -59,7 +60,7 @@ def processing(df:pd.DataFrame) -> None:
     df["experienceLevel"] = df.YearsCode.apply(label_experience_level)
     df["usesDocumentation"] = df.LearnCode.apply(is_using_documentation)
     df["usesStackOverflow"] = df.LearnCode.apply(is_using_stack)
-    df["usesStackOverflow"] = df.LearnCode.apply(is_using_stack)
+    df["usesAIForLearning"] = df.LearnCode.apply(is_using_ai)
 
 
 
