@@ -10,11 +10,11 @@ class FileLoader:
 
     def load_data(self):
         self.logger.info(f"try to load file : {self.file_path}")
-        if not self.file_path.is_file:
+        if not self.file_path.is_file():
             self.logger.error(f"file: {self.file_path} not exists!")
             return []
         
-        with open(self.file_path) as file:
+        with open(self.file_path, encoding='utf-8') as file:
             data = csv.DictReader(file)
             for row in data:
                 if row:

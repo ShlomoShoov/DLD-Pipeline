@@ -18,13 +18,15 @@ def cleaning(df:pd.DataFrame)-> None:
     
 
 def label_experience_level(years:int):
-    if years > 11:
+    if pd.isna(years):
+        return "Unknown"
+    if years >= 11:
         return "Highly Experienced"
-    if years > 6:
+    if years >= 6:
         return "Experienced"
-    if years > 3:
+    if years >= 3:
         return "Early Career"
-    if years > 0:
+    if years >= 0:
         return "Beginner"
     return "Unknown"
 

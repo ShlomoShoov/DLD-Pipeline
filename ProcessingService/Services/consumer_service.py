@@ -10,7 +10,7 @@ class ConsumerService:
         self.consumer:Consumer = Consumer(configs.get_consumer_configs(auto_commit=False, earliest_reset=True))
         self.consumer.subscribe([self.configs.raw_topic_name])
         self.logger = logger
-    def consume(self, batch_size:int = 50, max_wait_time:timedelta = timedelta(seconds=10))-> list[Message]:
+    def consume(self, batch_size:int = 100, max_wait_time:timedelta = timedelta(seconds=10))-> list[Message]:
         batch = []
         timeout_second = max_wait_time.total_seconds()
         deadline = time.monotonic() + timeout_second
